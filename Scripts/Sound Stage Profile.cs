@@ -2,28 +2,49 @@ using UnityEngine;
 
 namespace CinemaB
 {
-    [CreateAssetMenu(fileName = "SoundStageProfile", menuName = "CinemaB/Sound Stage Profile")]
+    [System.Serializable]
+    [CreateAssetMenu(fileName = "SoundStageProfile", menuName = "Cinema B/Sound Stage Profile")]
     public class SoundStageProfile : ScriptableObject
     {
-        public enum StageSize { TV, MidSize, FeatureFilm }
-        public StageSize stageSize;
-
-        public int numberOfWalls = 3; // Defaults to 3 walls
-        public bool hasWildWalls = false;
-
-        public Vector3 GetStageDimensions()
+        public enum StageSize
         {
-            // Set the stage dimensions based on the selected size
+            TV,
+            MidSize,
+            FeatureFilm,
+            Custom
+        }
+
+        // The selected stage size preset
+        public StageSize stageSize = StageSize.TV;
+
+        // The actual size of the stage, updated based on the preset
+        public Vector3 size;
+
+        // Custom size field
+        public Vector3 customSize = new Vector3(30, 20, 50);
+
+        // Preset sizes
+        private static readonly Vector3 TVSize = new Vector3(10, 8, 20);
+        private static readonly Vector3 MidSize = new Vector3(20, 15, 40);
+        private static readonly Vector3 FeatureFilmSize = new Vector3(50, 30, 100);
+
+        // Method to update the size based on the preset
+        public void UpdateSize()
+        {
             switch (stageSize)
             {
                 case StageSize.TV:
-                    return new Vector3(12.19f, 4.57f, 9.14f); // TV Stage: 40ft wide, 15ft tall, 30ft deep
+                    size = TVSize;
+                    break;
                 case StageSize.MidSize:
-                    return new Vector3(18.29f, 7.62f, 15.24f); // Mid-Size Stage: 60ft wide, 25ft tall, 50ft deep
+                    size = MidSize;
+                    break;
                 case StageSize.FeatureFilm:
-                    return new Vector3(30.48f, 12.19f, 24.38f); // Feature Film: 100ft wide, 40ft tall, 80ft deep
-                default:
-                    return Vector3.one; // Fallback, though this should never happen
+                    size = FeatureFilmSize;
+                    break;
+                case StageSize.Custom:
+                    size = customSize;
+                    break;
             }
         }
     }

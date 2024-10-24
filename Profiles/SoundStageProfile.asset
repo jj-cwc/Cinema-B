@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 445bf24832ad7bf44a063418a0a03e9a, type: 3}
-  m_Name: Default Sound Stage Profile
+  m_Name: SoundStageProfile
   m_EditorClassIdentifier: 
   stageSize: 0
-  numberOfWalls: 3
-  hasWildWalls: 0
+  size: {x: 10, y: 8, z: 20}
+  customSize: {x: 30, y: 20, z: 50}
