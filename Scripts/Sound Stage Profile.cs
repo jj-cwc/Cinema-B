@@ -2,19 +2,29 @@ using UnityEngine;
 
 namespace CinemaB
 {
-    [CreateAssetMenu(fileName = "SoundStageProfile", menuName = "Cinema B/Sound Stage Profile")]
+    [CreateAssetMenu(fileName = "SoundStageProfile", menuName = "CinemaB/Sound Stage Profile")]
     public class SoundStageProfile : ScriptableObject
     {
         public enum StageSize { TV, MidSize, FeatureFilm }
-
-        [Header("Stage Settings")]
         public StageSize stageSize;
 
-        [Range(1, 4)]
-        public int numberOfWalls = 3; // B-movie sets typically have 3 walls, the 4th being open for the camera
+        public int numberOfWalls = 3; // Defaults to 3 walls
+        public bool hasWildWalls = false;
 
-        public bool hasWildWalls = false; // Wild walls can be moved for different shots
-
-        // You can add more properties as needed, such as lighting or set dressing
+        public Vector3 GetStageDimensions()
+        {
+            // Set the stage dimensions based on the selected size
+            switch (stageSize)
+            {
+                case StageSize.TV:
+                    return new Vector3(12.19f, 4.57f, 9.14f); // TV Stage: 40ft wide, 15ft tall, 30ft deep
+                case StageSize.MidSize:
+                    return new Vector3(18.29f, 7.62f, 15.24f); // Mid-Size Stage: 60ft wide, 25ft tall, 50ft deep
+                case StageSize.FeatureFilm:
+                    return new Vector3(30.48f, 12.19f, 24.38f); // Feature Film: 100ft wide, 40ft tall, 80ft deep
+                default:
+                    return Vector3.one; // Fallback, though this should never happen
+            }
+        }
     }
 }
