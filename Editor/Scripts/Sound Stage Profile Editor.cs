@@ -31,6 +31,13 @@ public class SoundStageProfileEditor : Editor
         // Apply changes to the size based on the current preset
         profile.UpdateSize();
 
+        // Display the wall toggle fields
+        EditorGUILayout.Space(); // Add some space for clarity
+        EditorGUILayout.LabelField("Wall Options", EditorStyles.boldLabel);
+        profile.leftWall = EditorGUILayout.Toggle("Left Wall", profile.leftWall);
+        profile.rightWall = EditorGUILayout.Toggle("Right Wall", profile.rightWall);
+        profile.frontWall = EditorGUILayout.Toggle("Front Wall", profile.frontWall);
+
         // Mark the profile as dirty to save changes in the Inspector
         if (GUI.changed)
         {

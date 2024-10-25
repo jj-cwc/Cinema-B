@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace CinemaB
@@ -14,14 +15,12 @@ namespace CinemaB
             Custom
         }
 
-        // The selected stage size preset
         public StageSize stageSize = StageSize.TV;
-
-        // The actual size of the stage, updated based on the preset
         public Vector3 size;
-
-        // Custom size field
         public Vector3 customSize = new Vector3(30, 20, 50);
+        public Boolean leftWall = false;
+        public Boolean rightWall = false;
+        public Boolean frontWall = false;
 
         // Preset sizes
         private static readonly Vector3 TVSize = new Vector3(10, 8, 20);
