@@ -1,12 +1,14 @@
-using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace CinemaB
 {
+    [ExecuteInEditMode]
     public class SoundStage : MonoBehaviour
     {
         public SoundStageProfile profile; // Reference to the SoundStageProfile
         private Vector3 lastKnownStageSize; // Tracks the last known size for change detection
+        private bool needsInitialization = false; // Flag to defer initialization
 
         void Start()
         {
@@ -15,105 +17,100 @@ namespace CinemaB
                 Debug.LogError("No SoundStageProfile assigned! Please assign a profile to the Sound Stage.");
                 return;
             }
-            else
-            {
-                InitializeStage();
-            }
+
+            InitializeStage(); // Set up the stage once at runtime
         }
 
         // Called to set up or reset the stage based on the profile
         private void InitializeStage()
         {
-            // Check if this is the first setup
-            if (hasElement("Floor"))
-            {
-                ClearStage(); // Clear the stage if the profile size has changed
-            }
             Debug.Log("Initializing stage with profile size: " + profile.size);
-            AddSurface(Vector3.zero, new Vector3(profile.size.x, 0.1f, profile.size.z), "Floor");
-            AddSurface(new Vector3(0, profile.size.y, 0), new Vector3(profile.size.x, 0.1f, profile.size.z), "Ceiling");
-            AddSurface(new Vector3(0, profile.size.y / 2, -profile.size.z / 2), new Vector3(profile.size.x, profile.size.y, 0.1f), "Back Wall");
-            if (profile.leftWall)
-            {
-                AddSurface(new Vector3(-profile.size.x / 2, profile.size.y / 2, 0),
-                           new Vector3(0.1f, profile.size.y, profile.size.z), "Left Wall");
-            }
-            if (profile.rightWall)
-            {
-                AddSurface(new Vector3(profile.size.x / 2, profile.size.y / 2, 0),
-                           new Vector3(0.1f, profile.size.y, profile.size.z), "Right Wall");
-            }
-            if (profile.frontWall)
-            {
-                AddSurface(new Vector3(0, profile.size.y / 2, profile.size.z / 2),
-                           new Vector3(profile.size.x, profile.size.y, 0.1f), "Front Wall");
-            }
+            ConfigureSurface(Vector3.zero, new Vector3(profile.size.x, 0.1f, profile.size.z), "Floor");
+            ConfigureSurface(new Vector3(0, profile.size.y, 0), new Vector3(profile.size.x, 0.1f, profile.size.z), "Ceiling");
+            ConfigureSurface(new Vector3(0, profile.size.y / 2, -profile.size.z / 2), new Vector3(profile.size.x, profile.size.y, 0.1f), "Back Wall");
+
+            // Add walls based on profile settings
+            ConfigureConditionalSurface(profile.leftWall, new Vector3(-profile.size.x / 2, profile.size.y / 2, 0),
+                                        new Vector3(0.1f, profile.size.y, profile.size.z), "Left Wall");
+            ConfigureConditionalSurface(profile.rightWall, new Vector3(profile.size.x / 2, profile.size.y / 2, 0),
+                                        new Vector3(0.1f, profile.size.y, profile.size.z), "Right Wall");
+            ConfigureConditionalSurface(profile.frontWall, new Vector3(0, profile.size.y / 2, profile.size.z / 2),
+                                        new Vector3(profile.size.x, profile.size.y, 0.1f), "Front Wall");
 
             lastKnownStageSize = profile.size; // Update the last known size
+            needsInitialization = false; // Reset flag after initialization
         }
 
-        private Boolean hasElement(string label)
-        {
-            SoundStageElement element = null;
-            foreach (Transform child in transform)
-            {
-                element = isSoundStageElement(child);
-                if (element && element.HasLabel(label))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // Destroy all stage elements
-        public void ClearStage()
-        {
-            foreach (Transform child in transform)
-            {
-                if (isSoundStageElement(child))
-                {
-                    DestroyImmediate(child.gameObject);
-                }
-            }
-            Debug.Log("Cleared stage elements.");
-        }
-
-        // Add a surface to the stage
-        public void AddSurface(Vector3 position, Vector3 size, string label)
-        {
-            GameObject surface = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            surface.name = label;
-            surface.transform.localScale = size; // Scale appropriately
-            surface.transform.SetParent(transform);
-            surface.transform.localPosition = position;
-            SoundStageElement element = surface.AddComponent<SoundStageElement>();
-            element.AddLabel(label);
-            Debug.Log($"Added {label} at position {position} with size {size}");
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-            if (profile != null && profile.size != lastKnownStageSize)
-            {
-                // Reconstruct the stage only if there is a profile change at runtime
-                InitializeStage();
-            }
-        }
-
-        // OnValidate to catch changes in the Inspector
         private void OnValidate()
         {
-            if (profile != null && profile.size != lastKnownStageSize)
+            if (profile != null && profile.HasChanged())
             {
-                InitializeStage();
+                needsInitialization = true;
+                EditorApplication.update += InitializeOnNextEditorUpdate;
             }
         }
 
-        private SoundStageElement isSoundStageElement(Transform transform)
+        private void InitializeOnNextEditorUpdate()
         {
-            return transform.gameObject.GetComponent<SoundStageElement>();
+            if (needsInitialization)
+            {
+                InitializeStage();
+            }
+            EditorApplication.update -= InitializeOnNextEditorUpdate; // Remove the callback after initializing
+        }
+
+        // Adds or destroys surface based on profile settings
+        private void ConfigureConditionalSurface(bool shouldExist, Vector3 position, Vector3 size, string label)
+        {
+            if (shouldExist)
+            {
+                ConfigureSurface(position, size, label);
+            }
+            else
+            {
+                DestroySurface(label);
+            }
+        }
+
+        private void DestroySurface(string label)
+        {
+            Transform element = TryGetSurface(label);
+            if (element != null)
+            {
+                DestroyImmediate(element.gameObject);
+                Debug.Log($"Destroyed {label}");
+            }
+        }
+
+        private Transform TryGetSurface(string label)
+        {
+            foreach (Transform child in transform)
+            {
+                SoundStageElement element = child.GetComponent<SoundStageElement>();
+                if (element != null && element.HasLabel(label))
+                {
+                    return child;
+                }
+            }
+            return null;
+        }
+
+        public void ConfigureSurface(Vector3 position, Vector3 size, string label)
+        {
+            Transform existingSurface = TryGetSurface(label);
+            GameObject surface = existingSurface ? existingSurface.gameObject : GameObject.CreatePrimitive(PrimitiveType.Cube);
+
+            surface.name = label;
+            surface.transform.localScale = size;
+            surface.transform.localPosition = position;
+            surface.transform.SetParent(transform);
+
+            if (!existingSurface)
+            {
+                SoundStageElement element = surface.AddComponent<SoundStageElement>();
+                element.AddLabel(label);
+                Debug.Log($"Added {label} at position {position} with size {size}");
+            }
         }
     }
 }
