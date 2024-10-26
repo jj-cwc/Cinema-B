@@ -8,14 +8,13 @@ namespace CinemaB
         [MenuItem("GameObject/Cinema B/Create Sound Stage", false, 10)]
         public static void CreateSoundStage()
         {
-            // Create a new GameObject
             GameObject soundStageGameObject = new GameObject("Sound Stage");
-
-            // Attach the SoundStage component to the GameObject
-            soundStageGameObject.AddComponent<SoundStage>();
-
-            // Optionally, place the GameObject in the scene hierarchy
+            soundStageGameObject.AddComponent<SoundStageLighting>();
+            soundStageGameObject.AddComponent<SoundStageStructure>();
             Selection.activeGameObject = soundStageGameObject;
+            soundStageGameObject.transform.position = Vector3.zero;
+            soundStageGameObject.transform.localScale = Vector3.one;
+            soundStageGameObject.transform.rotation = Quaternion.identity;
         }
     }
 }
